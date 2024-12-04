@@ -1,16 +1,20 @@
-import { Routes, Route } from 'react-router'
-import { Menu, NewDish, Orders } from './components/index'
-function App() {
+import { Routes, Route } from "react-router";
+import { Menu, NewDish, Orders } from "./components/pages/index";
+import { SideBar } from "./components/ui";
 
+function App() {
   return (
-    <>
-      <Routes>
-        <Route path="/" element={<Menu />} />
-        <Route path="/" element={<Orders />} />
-        <Route path="/" element={<NewDish />} />
-      </Routes >
-    </>
-  )
+    <div className="md:flex min-h-screen">
+      <SideBar />
+      <div className="md:w-3/5 xl:w-4/5">
+        <Routes>
+          <Route path="/" element={<Menu />} />
+          <Route path="/orders" element={<Orders />} />
+          <Route path="/new-dish" element={<NewDish />} />
+        </Routes>
+      </div>
+    </div>
+  );
 }
 
-export default App
+export default App;
