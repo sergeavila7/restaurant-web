@@ -9,8 +9,8 @@ import {
 import { Spinner } from "../ui/Spinner";
 
 export type OptionT = {
-  value: string | number;
-  label: string;
+  value: string | number | null;
+  label: string | null;
 };
 
 interface SelectProps {
@@ -83,8 +83,8 @@ export const SelectFormik: FC<
           onBlur={() => setFocus(false)}
         >
           {options.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
+            <option key={option.value} value={option.value ?? ""}>
+              {option.label || "Seleccione una opción"}
             </option>
           ))}
         </select>

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Form, Formik, FormikProps } from "formik";
 import {
   InputFormik,
@@ -6,7 +7,7 @@ import {
   UploadFile,
 } from "../ui/index";
 import { Button } from "../ui/Button";
-import { useState } from "react";
+import { newDishSchema } from "../../schemas/index";
 
 export const NewDish = () => {
   const [file, setFile] = useState<File>();
@@ -19,8 +20,11 @@ export const NewDish = () => {
           <Formik
             initialValues={{
               dishName: "",
+              price: 0,
+              category: null,
               description: "",
             }}
+            validationSchema={newDishSchema}
             onSubmit={(values, actions) => {
               setTimeout(() => {
                 alert(JSON.stringify(values, null, 2));
@@ -31,7 +35,7 @@ export const NewDish = () => {
             {(props: FormikProps<any>) => (
               <Form>
                 <div className="mb-4">
-                  <InputFormik name="name" label="Nombre" type="text" />
+                  <InputFormik name="dishName" label="Nombre" type="text" />
                 </div>
                 <div className="mb-4">
                   <InputFormik
@@ -47,7 +51,8 @@ export const NewDish = () => {
                     label="Categoria"
                     name="category"
                     options={[
-                      { label: "Desayuno", value: "transfer" },
+                      { label: null, value: null },
+                      { label: "Desayuno", value: "breakfast" },
                       { label: "Comida", value: "check" },
                       { label: "Cena", value: "cash" },
                       { label: "Bebida", value: "cash" },
