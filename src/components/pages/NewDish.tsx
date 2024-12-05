@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { Form, Formik, FormikProps } from "formik";
+import { FirebaseContext } from "../../firebase";
 import {
   InputFormik,
   SelectFormik,
@@ -10,6 +11,14 @@ import { Button } from "../ui/Button";
 import { newDishSchema } from "../../schemas/index";
 
 export const NewDish = () => {
+  const context = useContext(FirebaseContext);
+
+  if (!context) {
+    throw new Error("FirebaseContext is not available");
+  }
+
+  const { firebaseApp } = context;
+
   const [file, setFile] = useState<File>();
 
   return (
@@ -21,7 +30,7 @@ export const NewDish = () => {
             initialValues={{
               dishName: "",
               price: 0,
-              category: null,
+              category: "",
               description: "",
             }}
             validationSchema={newDishSchema}
@@ -51,13 +60,13 @@ export const NewDish = () => {
                     label="Categoria"
                     name="category"
                     options={[
-                      { label: null, value: null },
+                      { label: "", value: "" },
                       { label: "Desayuno", value: "breakfast" },
                       { label: "Comida", value: "check" },
-                      { label: "Cena", value: "cash" },
-                      { label: "Bebida", value: "cash" },
-                      { label: "Postres", value: "cash" },
-                      { label: "Ensaladas", value: "cash" },
+                      { label: "Cena", value: "dinner" },
+                      { label: "Bebida", value: "drink" },
+                      { label: "Postres", value: "dessert" },
+                      { label: "Ensaladas", value: "salads" },
                     ]}
                   />
                 </div>

@@ -9,8 +9,8 @@ import {
 import { Spinner } from "../ui/Spinner";
 
 export type OptionT = {
-  value: string | number | null;
-  label: string | null;
+  value: string | number;
+  label: string;
 };
 
 interface SelectProps {
