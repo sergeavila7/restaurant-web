@@ -1,118 +1,82 @@
-import { ChangeEvent, DragEvent, FC, useEffect, useRef, useState } from "react";
+import { FC, useContext, useEffect, useState } from "react";
 import { Button } from "../ui/index";
-import { ArrowUpTrayIcon, PhotoIcon } from "@heroicons/react/24/outline";
+import { ArrowUpTrayIcon } from "@heroicons/react/24/outline";
+import FileUploader from "react-firebase-file-uploader";
+import { FirebaseContext } from "../../firebase/index";
 
-export const MAX_FILE_SIZE = 10000000;
-export interface IErrorFile {
-  code: "MAX_FILE_SIZE" | string;
-  message: string;
-}
 interface UploadFileProps {
   multiply?: boolean;
   isInline?: boolean;
   label?: string;
-  maxFileSize?: number;
-  isLoaded?: string | null;
-  onFileSelected: (file: File | FileList) => void;
-  onError: (error: IErrorFile) => void;
-  isUploadCancel?: boolean;
   disabled?: boolean;
-  fileUpload?: string;
-  isUpload?: boolean;
   files?: File | FileList | string | null;
+  urlImage: string;
+  saveUrlImage: (url: string) => void;
 }
-
-export const MAX_FILE_SIZE_CODE = "MAX_FILE_SIZE";
 
 export const UploadFile: FC<UploadFileProps> = ({
   multiply = false,
-  isLoaded,
-  maxFileSize = MAX_FILE_SIZE,
   isInline = false,
   label,
-  onFileSelected,
-  onError,
-  isUploadCancel,
   disabled,
-  isUpload,
   files,
+  urlImage,
+  saveUrlImage,
 }) => {
-  const inputFile = useRef<HTMLInputElement>(null);
-  const [file, setFile] = useState<File | FileList | string | null>(null);
+  const { firebaseApp } = useContext(FirebaseContext);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (files !== undefined) {
-      setFile(files);
+      saveUrlImage(urlImage);
     }
   }, [files]);
 
-  const errorFile = (files: File | FileList) => {
-    const filesArray = Array.isArray(files) ? files : [files];
-
-    for (const file of filesArray) {
-      if (file?.size >= maxFileSize) {
-        onError({
-          code: MAX_FILE_SIZE_CODE,
-          message:
-            "El archivo es muy pesado para ser subido, el máximo es de 10Mb",
-        });
-        return;
-      }
-    }
-
-    onError({ code: "", message: "" });
+  const handleUploadSuccess = async (name: string) => {
+    setIsLoading(true);
+    const url = await firebaseApp.storage
+      .ref("products")
+      .child(name)
+      .getDownloadURL();
+    saveUrlImage(url);
   };
 
-  const fileSelected = (file: File | FileList) => {
-    errorFile(file);
-    setFile(file);
-    onFileSelected(file);
+  const handleUploadError = (error: any) => {
+    console.error(error);
   };
 
-  const handleFileSelected = () => {
-    if (inputFile.current) {
-      inputFile.current.click();
-    }
+  const handleProgress = (progress: any) => {
+    setIsLoading(progress);
   };
 
-  const handleChangeFile = (event: ChangeEvent<HTMLInputElement>) => {
-    if (!event.target.files) {
+  const handleDrag = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!event.dataTransfer.files || !event.dataTransfer.files[0]) {
       return;
     }
 
-    if (multiply) {
-      fileSelected(event.target.files);
-    } else {
-      fileSelected(event.target.files[0]);
-    }
-  };
+    const file = event.dataTransfer.files[0];
+    saveUrlImage(URL.createObjectURL(file));
 
-  const handleDrag = (event: DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
+    firebaseApp.storage
+      .ref("products")
+      .child(file.name)
+      .put(file)
+      .then(() => handleUploadSuccess(file.name))
+      .catch(handleUploadError);
   };
-
-  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-  };
-
-  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    event.stopPropagation();
-    if (!event.dataTransfer.files && !event.dataTransfer.files[0]) {
-      return;
-    }
-    fileSelected(event.dataTransfer.files[0]);
-  };
-
-  useEffect(() => {
-    if (isLoaded) {
-      setFile(isLoaded);
-    } else {
-      setFile(null);
-    }
-  }, [isLoaded, isUploadCancel, isUpload]);
 
   return (
     <div
@@ -121,17 +85,18 @@ export const UploadFile: FC<UploadFileProps> = ({
       onDrop={handleDrop}
       className={`block ${disabled && "bg-light-gray-50"} w-full`}
     >
-      <input
+      <FileUploader
         hidden
-        value=""
-        type="file"
+        accept="image/*"
         id="input-file"
-        ref={inputFile}
-        multiple={multiply}
-        disabled={disabled}
-        onChange={handleChangeFile}
-        accept="image/jpeg, image/png"
+        name="image"
+        randomizeFileName
+        storageRef={firebaseApp.storage.ref("products")}
+        onUploadSuccess={handleUploadSuccess}
+        onUploadError={handleUploadError}
+        onProgress={handleProgress}
       />
+
       <label
         htmlFor="input-file"
         className={`rounded-lg outline-dashed outline-1 outline-offset-0 outline-light-gray-400 p-4 ${
@@ -145,7 +110,7 @@ export const UploadFile: FC<UploadFileProps> = ({
               : "block mx-auto text-center mb-4"
           } `}
         >
-          {!file && (
+          {!urlImage && (
             <>
               <div
                 className={`${
@@ -173,15 +138,19 @@ export const UploadFile: FC<UploadFileProps> = ({
               </div>
             </>
           )}
-          {file && (
+          {urlImage && (
             <>
-              <PhotoIcon />
+              <img
+                src={urlImage}
+                alt="Imagen cargada"
+                className="w-16 h-16 rounded-full object-cover"
+              />
               <p
                 className={`${
                   disabled ? "text-light-gray-200" : "text-light-gray-600"
                 } text-sm ml-3`}
               >
-                Archivo{multiply && "s"} cargado{multiply && "s"}
+                {!isLoading ? "Cargando..." : "Imagen cargada"}
               </p>
             </>
           )}
@@ -193,7 +162,7 @@ export const UploadFile: FC<UploadFileProps> = ({
             color="primary"
             disabled={disabled}
             size={isInline ? "small" : "medium"}
-            onClick={handleFileSelected}
+            onClick={() => document.getElementById("input-file")?.click()}
           >
             Seleccionar archivo{multiply && "s"}
           </Button>

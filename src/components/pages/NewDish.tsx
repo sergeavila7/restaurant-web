@@ -1,5 +1,5 @@
 import { useContext, useState } from "react";
-import { Form, Formik, FormikProps } from "formik";
+import { Form, Formik } from "formik";
 import { FirebaseContext } from "../../firebase";
 import {
   InputFormik,
@@ -19,7 +19,7 @@ export const NewDish = () => {
 
   const { firebaseApp } = context;
 
-  const [file, setFile] = useState<File>();
+  const [urlImage, saveUrlImage] = useState("");
 
   return (
     <div className="container mt-10">
@@ -31,10 +31,12 @@ export const NewDish = () => {
             price: 0,
             category: "",
             description: "",
+            image: "",
           }}
           validationSchema={newDishSchema}
           onSubmit={async (values) => {
             try {
+              values.image = urlImage;
               await firebaseApp.db.collection("products").add({
                 ...values,
               });
@@ -77,8 +79,8 @@ export const NewDish = () => {
               </div>
               <UploadFile
                 label="Imagen"
-                onFileSelected={(actual) => setFile(actual as File)}
-                onError={(e) => console.log(e.message)}
+                urlImage={urlImage}
+                saveUrlImage={saveUrlImage}
                 isInline
               />
               <div className="mb-4">
