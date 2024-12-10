@@ -1,4 +1,6 @@
 import { useContext, useState } from "react";
+import { useNavigate } from "react-router";
+
 import { Form, Formik } from "formik";
 import { FirebaseContext } from "../../firebase";
 import {
@@ -21,6 +23,8 @@ export const NewDish = () => {
 
   const [urlImage, saveUrlImage] = useState("");
 
+  let navigate = useNavigate();
+
   return (
     <div className="container mt-10">
       <h1 className="text-3xl font-light mb-4">Agregar Platillo</h1>
@@ -40,6 +44,7 @@ export const NewDish = () => {
               await firebaseApp.db.collection("products").add({
                 ...values,
               });
+              navigate("/");
               alert("Platillo agregado con éxito");
             } catch (error) {
               alert(
